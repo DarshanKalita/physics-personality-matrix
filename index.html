@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Classic Physics Textbook Test</title>
+<style>
+    :root {
+        --bg-color: #ffffff;
+        --text-color: #000000;
+        --question-bg: #e0e0ff;
+        --button-bg: #d0ffd0;
+        --border-color: #cccccc;
+        --error-color: #cc0000;
+    }
+    body {
+        font-family: "Times New Roman", Times, serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 2rem;
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        line-height: 1.5;
+    }
+    h1 {
+        text-align: center;
+        border-bottom: 2px solid var(--text-color);
+        padding-bottom: 0.5rem;
+    }
+    .subtitle {
+        text-align: center;
+        font-style: italic;
+        margin-bottom: 2rem;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5rem;
+    }
+    td {
+        padding: 12px;
+        vertical-align: top;
+        width: 50%;
+    }
+    td.question {
+        background-color: var(--question-bg);
+        font-weight: bold;
+        width: 100%;
+        border-top: 1px solid var(--border-color);
+    }
+    td.button-container {
+        text-align: center;
+        background-color: var(--button-bg);
+        padding: 20px;
+        width: 100%;
+        border-top: 2px solid var(--border-color);
+        border-bottom: 2px solid var(--border-color);
+    }
+    button {
+        font-family: inherit;
+        font-size: 1.1rem;
+        padding: 8px 16px;
+        cursor: pointer;
+        background-color: #ffffff;
+        border: 1px solid var(--text-color);
+    }
+    button:hover {
+        background-color: #f0f0f0;
+    }
+    label {
+        cursor: pointer;
+        display: block;
+    }
+    #error-message {
+        display: none;
+        color: var(--error-color);
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    
+    /* Result Screen Styles */
+    #result-screen {
+        display: none;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    .book-cover-img {
+        width: 240px;
+        height: auto;
+        min-height: 350px;
+        border: 1px solid #000;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+        margin: 0 auto 1.5rem auto;
+        display: block;
+        background-color: #f0f0f0;
+    }
+    
+    /* CSS Fallback Cover Styles */
+    .book-cover {
+        width: 240px;
+        height: 350px;
+        background-color: #003366; 
+        color: #ffffff;
+        border: 2px solid #000;
+        margin: 0 auto 1.5rem auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 20px;
+        box-sizing: border-box;
+        text-align: left;
+        box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
+    }
+    .cover-publisher {
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        text-align: right;
+        color: #cccccc;
+    }
+    .cover-series {
+        font-size: 0.8rem;
+        font-style: italic;
+    }
+    .cover-author {
+        font-size: 1.1rem;
+        font-weight: bold;
+    }
+    .cover-title {
+        font-size: 1.4rem;
+        font-weight: bold;
+        line-height: 1.2;
+        margin-bottom: 1rem;
+    }
+</style>
+<script>
+    // 26 Books covering diverse subfields and pedagogical styles
+    // Coordinates [q1, q2, q3, q4] define the book's ideal personality vector.
+    // Q1 (Objective): 0=Intuitive, 1=Standard, 2=Computational, 3=Rigorous
+    // Q2 (Environment): 0=Chaos, 1=Astro/Macro, 2=Fluids/Flow, 3=Exact/Structure
+    // Q3 (Snack/Domain): 0=Rigid, 1=Scattering, 2=Continuous/Fields, 3=Fundamental
+    // Q4 (Transit/Dynamic): 0=Determinism, 1=Perturbation, 2=BlackBox, 3=Grueling
+
+    const catalog = {
+        jackson: { coord: [3, 2, 3, 3], isbn: "9780471309321", author: "J.D. Jackson", title: "Classical Electrodynamics", desc: "You believe suffering builds character. You communicate in spherical harmonics and boundary-value geometry." },
+        griffiths_em: { coord: [1, 2, 2, 3], isbn: "9781108420419", author: "D.J. Griffiths", title: "Introduction to Electrodynamics", desc: "You are approachable but rigorous enough to lay the standard foundation. You value clear vector calculus over abstract math." },
+        zangwill: { coord: [2, 2, 2, 1], isbn: "9780521896979", author: "A. Zangwill", title: "Modern Electrodynamics", desc: "You are the modern upgrade. You rely on computation and updated methodology rather than legacy techniques." },
+        goldstein: { coord: [3, 3, 0, 0], isbn: "9780201657029", author: "H. Goldstein", title: "Classical Mechanics", desc: "You are deeply traditional. Everything can be solved if you formulate the correct Lagrangian." },
+        morin: { coord: [0, 3, 0, 0], isbn: "9780521876223", author: "D. Morin", title: "Introduction to Classical Mechanics", desc: "You approach complex physics with intuition and clever tricks rather than brute mathematical force." },
+        landau: { coord: [3, 2, 2, 3], isbn: "9780750628969", author: "L.D. Landau, E.M. Lifshitz", title: "Mechanics", desc: "You are unapologetically terse. If the derivation is obvious, you see no reason to explain it further." },
+        sakurai: { coord: [3, 3, 1, 0], isbn: "9781108473224", author: "J.J. Sakurai", title: "Modern Quantum Mechanics", desc: "You see the universe through symmetry and operators. Dirac notation is your native tongue." },
+        griffiths_qm: { coord: [1, 3, 1, 0], isbn: "9781107189638", author: "D.J. Griffiths", title: "Introduction to Quantum Mechanics", desc: "You prefer to solve the Schrödinger equation directly and get a tangible answer rather than philosophize about states." },
+        shankar: { coord: [3, 3, 3, 0], isbn: "9780306447907", author: "R. Shankar", title: "Principles of Quantum Mechanics", desc: "You demand a rigid mathematical foundation in linear algebra before touching any physical system." },
+        dirac: { coord: [3, 3, 3, 3], isbn: "9780198520115", author: "P.A.M. Dirac", title: "The Principles of Quantum Mechanics", desc: "You are the fundamental architect. Your logic is pristine, foundational, and completely uncompromising." },
+        pathria: { coord: [3, 0, 1, 2], isbn: "9780123821881", author: "R.K. Pathria", title: "Statistical Mechanics", desc: "You are analytical and comfortable with macroscopic chaos, provided you can integrate exactly over it." },
+        schroeder: { coord: [0, 0, 1, 1], isbn: "9780201380279", author: "D.V. Schroeder", title: "An Introduction to Thermal Physics", desc: "You are highly intuitive. You understand macroscopic states through straightforward probabilistic models." },
+        kardar: { coord: [2, 0, 2, 1], isbn: "9780521873420", author: "M. Kardar", title: "Statistical Physics of Particles", desc: "You view the world through scaling, fluctuations, and modern renormalization techniques." },
+        mtw: { coord: [3, 1, 0, 2], isbn: "9780691177793", author: "Misner, Thorne, Wheeler", title: "Gravitation", desc: "You are dense, massive, and occasionally overwhelming. You operate on a cosmological scale." },
+        wald: { coord: [3, 1, 0, 3], isbn: "9780226870335", author: "R.M. Wald", title: "General Relativity", desc: "You are precise and mathematically rigorous. You prefer coordinate-free differential geometry over messy tensor indices." },
+        schutz: { coord: [1, 1, 0, 0], isbn: "9780521887052", author: "B. Schutz", title: "A First Course in General Relativity", desc: "You offer a structured, accessible approach to curved spacetime without sacrificing the necessary geometric rigor." },
+        carroll: { coord: [2, 1, 0, 1], isbn: "9780805387322", author: "S.M. Carroll", title: "Spacetime and Geometry", desc: "You are the modern standard for cosmology. You connect abstract manifolds to tangible astrophysical applications." },
+        peskin: { coord: [1, 0, 1, 2], isbn: "9780201503975", author: "M.E. Peskin, D.V. Schroeder", title: "An Introduction to Quantum Field Theory", desc: "You are the standard, yet inexplicably frustrating when trying to keep track of minus signs in scattering cross-sections." },
+        weinberg: { coord: [3, 0, 3, 3], isbn: "9780521670531", author: "S. Weinberg", title: "The Quantum Theory of Fields", desc: "You are encyclopedic. You derive everything from absolute, axiomatic first principles." },
+        zee: { coord: [0, 0, 3, 1], isbn: "9780691140346", author: "A. Zee", title: "Quantum Field Theory in a Nutshell", desc: "You rely on deep conceptual intuition rather than brute calculation to understand fundamental symmetries." },
+        ashcroft: { coord: [1, 3, 0, 3], isbn: "9780030839931", author: "N.W. Ashcroft, N.D. Mermin", title: "Solid State Physics", desc: "You care about the periodic structure of things and tangible results, maintaining a highly readable conversational tone." },
+        kittel: { coord: [0, 3, 0, 1], isbn: "9780471415268", author: "C. Kittel", title: "Introduction to Solid State Physics", desc: "You provide a phenomenological, ground-up introduction to crystals and lattices. You are highly practical." },
+        simon: { coord: [2, 3, 0, 1], isbn: "9780199680771", author: "S.H. Simon", title: "The Oxford Solid State Basics", desc: "You are the modern, streamlined approach to condensed matter, cutting through legacy bloat." },
+        arfken: { coord: [1, 2, 2, 0], isbn: "9780123846549", author: "G.B. Arfken", title: "Mathematical Methods for Physicists", desc: "You are the ultimate pragmatist. You just want the mathematical tools to solve the integral." },
+        bender: { coord: [3, 0, 2, 1], isbn: "9781441931870", author: "C. Bender", title: "Advanced Mathematical Methods", desc: "You love asymptotic expansions. Exact solutions are a myth to you." },
+        binney: { coord: [2, 1, 2, 0], isbn: "9780691130279", author: "J. Binney, S. Tremaine", title: "Galactic Dynamics", desc: "You think on a cosmic scale, tracking the collisionless evolution of massive fluid systems." }
+    };
+
+    // Initialize 256-node Look Up Table based on Euclidean distance in 4D trait space
+    const LUT = new Array(256);
+    for (let i = 0; i < 256; i++) {
+        let q1 = Math.floor(i / 64);
+        let q2 = Math.floor((i % 64) / 16);
+        let q3 = Math.floor((i % 16) / 4);
+        let q4 = i % 4;
+
+        let bestBook = null;
+        let minDistance = 9999;
+
+        for (const key in catalog) {
+            let c = catalog[key].coord;
+            // Calculate squared Euclidean distance between user answers and book profile
+            let dist = Math.pow(q1 - c[0], 2) + Math.pow(q2 - c[1], 2) + Math.pow(q3 - c[2], 2) + Math.pow(q4 - c[3], 2);
+            
+            if (dist < minDistance) {
+                minDistance = dist;
+                bestBook = key;
+            }
+        }
+        LUT[i] = bestBook;
+    }
+
+    function process() {
+        const f = document.forms['quiz'];
+        const questions = ["q1", "q2", "q3", "q4"];
+        const errorBox = document.getElementById("error-message");
+        let hashIndex = 0;
+        const multipliers = [64, 16, 4, 1];
+
+        // Ensure all questions are answered and build the quaternary hash
+        for (let q = 0; q < questions.length; q++) {
+            const group = f[questions[q]];
+            let answered = false;
+            for (let i = 0; i < group.length; i++) {
+                if (group[i].checked) { 
+                    hashIndex += parseInt(group[i].value) * multipliers[q];
+                    answered = true; 
+                    break; 
+                }
+            }
+            if (!answered) {
+                errorBox.style.display = "block";
+                errorBox.innerText = "Error: Please answer all questions before proceeding.";
+                return false;
+            }
+        }
+        
+        errorBox.style.display = "none";
+        renderResult(LUT[hashIndex], hashIndex);
+    }
+
+    function renderResult(bookKey, hashIndex) {
+        const book = catalog[bookKey];
+        
+        // Hide quiz, show results
+        document.getElementById("quiz-screen").style.display = "none";
+        const resultScreen = document.getElementById("result-screen");
+        resultScreen.style.display = "block";
+
+        const imgEl = document.getElementById("res-cover-img");
+        const cssCover = document.getElementById("res-cover-css");
+
+        imgEl.style.display = "block";
+        cssCover.style.display = "none";
+
+        document.getElementById("res-author").innerText = book.author;
+        document.getElementById("res-title").innerText = book.title;
+        document.getElementById("res-desc").innerText = book.desc;
+        document.getElementById("res-hash").innerText = "Euclidean Profile Assignment Complete (Node: " + hashIndex + "/255)";
+
+        document.getElementById("css-author").innerText = book.author;
+        document.getElementById("css-title").innerText = book.title;
+
+        imgEl.src = `https://covers.openlibrary.org/b/isbn/${book.isbn}-L.jpg`;
+        imgEl.onerror = function() {
+            this.style.display = "none";
+            cssCover.style.display = "flex";
+        };
+    }
+
+    function resetQuiz() {
+        document.forms['quiz'].reset();
+        document.getElementById("result-screen").style.display = "none";
+        document.getElementById("quiz-screen").style.display = "block";
+        document.getElementById("error-message").style.display = "none";
+        window.scrollTo(0, 0);
+    }
+</script>
+</head>
+<body>
+
+<h1>The Classic Physics Textbook Test</h1>
+<div class="subtitle">Which classic graduate physics textbook are you?</div>
+
+<div id="quiz-screen">
+    <div id="error-message"></div>
+    <form name="quiz">
+    <table>
+        <tr><td colspan="2" class="question">You are attending a mandatory departmental colloquium. What is your primary objective?</td></tr>
+        <tr>
+            <td><label><input type="radio" name="q1" value="0"> Furiously calculating an order-of-magnitude estimate on a napkin to see if the speaker's claim is even physically possible.</label></td>
+            <td><label><input type="radio" name="q1" value="1"> Sitting in the back row, absorbing the free pizza, and maintaining a low scattering cross-section to avoid eye contact.</label></td>
+        </tr>
+        <tr>
+            <td><label><input type="radio" name="q1" value="2"> Zoning out completely to mentally debug a Python script that has been running since Tuesday.</label></td>
+            <td><label><input type="radio" name="q1" value="3"> Interrupting the speaker on slide 2 to point out a missing index in their tensor notation.</label></td>
+        </tr>
+
+        <tr><td colspan="2" class="question">You are dragged to a massive outdoor music festival. Where do you end up?</td></tr>
+        <tr>
+            <td><label><input type="radio" name="q2" value="0"> Right in the middle of the mosh pit.</label></td>
+            <td><label><input type="radio" name="q2" value="1"> Sitting on a blanket way in the back, taking in the macro structure of the environment.</label></td>
+        </tr>
+        <tr>
+            <td><label><input type="radio" name="q2" value="2"> Drifting fluidly from food truck to food truck, following the flow of the crowd.</label></td>
+            <td><label><input type="radio" name="q2" value="3"> Backstage, trying to logically deduce how the structural lighting and audio rigs are wired.</label></td>
+        </tr>
+
+        <tr><td colspan="2" class="question">You're at the movie theater. What is your go-to concession stand order?</td></tr>
+        <tr>
+            <td><label><input type="radio" name="q3" value="0"> A massive, structurally intact, heavily salted soft pretzel.</label></td>
+            <td><label><input type="radio" name="q3" value="1"> A violently over-buttered bucket of popcorn that scatters everywhere.</label></td>
+        </tr>
+        <tr>
+            <td><label><input type="radio" name="q3" value="2"> A continuously flowing 32-ounce blue raspberry slushie.</label></td>
+            <td><label><input type="radio" name="q3" value="3"> Just a pure, fundamental black coffee you snuck in.</label></td>
+        </tr>
+
+        <tr><td colspan="2" class="question">You have to travel across a major city during rush hour. What's your strategy?</td></tr>
+        <tr>
+            <td><label><input type="radio" name="q4" value="0"> Take the subway—no traffic, exact deterministic rails.</label></td>
+            <td><label><input type="radio" name="q4" value="1"> Weave rapidly through chaotic traffic on a rented electric scooter.</label></td>
+        </tr>
+        <tr>
+            <td><label><input type="radio" name="q4" value="2"> Sleep in the back of a taxi and magically tunnel to your destination.</label></td>
+            <td><label><input type="radio" name="q4" value="3"> Walk. It takes two hours, but it is grueling, foundational, and you control the pace.</label></td>
+        </tr>
+
+        <tr>
+            <td colspan="2" class="button-container">
+                <button type="button" onClick="process();">Which Physics Textbook am I?</button>
+            </td>
+        </tr>
+    </table>
+    </form>
+</div>
+
+<div id="result-screen">
+    <img id="res-cover-img" src="" alt="Book Cover" class="book-cover-img">
+    
+    <div id="res-cover-css" class="book-cover" style="display: none;">
+        <div class="cover-publisher">Graduate Texts</div>
+        <div>
+            <div class="cover-author" id="css-author"></div>
+            <div class="cover-title" id="css-title"></div>
+        </div>
+        <div class="cover-series"></div>
+    </div>
+    
+    <div class="cover-author" id="res-author"></div>
+    <div class="cover-title" id="res-title"></div>
+    
+    <p style="white-space: pre-wrap; text-align: left;"><strong id="res-desc"></strong></p>
+    <p style="font-size: 0.8rem; color: #666;" id="res-hash"></p>
+    
+    <button type="button" onClick="resetQuiz();" style="margin-top: 1rem;">Retake the Test</button>
+</div>
+
+</body>
+</html>
