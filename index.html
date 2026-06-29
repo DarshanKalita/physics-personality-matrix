@@ -86,12 +86,12 @@
     #result-screen {
         display: none;
         text-align: center;
-        margin-top: 1.5rem;
+        margin-top: 1rem;
     }
     #result-heading {
-        font-size: 1.5rem;
+        font-size: 1.3rem;
         font-weight: bold;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
         color: var(--link-color);
     }
     
@@ -100,36 +100,36 @@
         display: flex;
         justify-content: center;
         align-items: flex-start;
-        gap: 2rem;
+        gap: 1.5rem;
         flex-wrap: wrap;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
     }
     .book-card {
-        width: 240px;
+        width: 200px;
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 
     .book-cover-img {
-        width: 200px;
+        width: 150px;
         height: auto;
-        min-height: 300px;
+        min-height: 225px;
         border: 1px solid #000;
         box-shadow: 3px 3px 10px rgba(0,0,0,0.2);
-        margin: 0 auto 1.5rem auto;
+        margin: 0 auto 1rem auto;
         display: block;
         background-color: #f0f0f0;
         object-fit: cover;
     }
     
     .cover-author {
-        font-size: 1rem;
+        font-size: 0.9rem;
         font-weight: bold;
         text-align: center;
     }
     .cover-title {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: bold;
         line-height: 1.2;
         margin-bottom: 0.5rem;
@@ -138,9 +138,33 @@
     .book-desc {
         white-space: pre-wrap; 
         text-align: left; 
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
     
+    /* Share & Banner Styles */
+    .share-container {
+        margin: 1rem auto;
+        padding: 0.8rem;
+        background-color: var(--question-bg);
+        border: 1px solid var(--border-color);
+        display: inline-block;
+    }
+    .share-input {
+        width: 300px;
+        padding: 8px;
+        font-family: monospace;
+        font-size: 1rem;
+        margin-right: 10px;
+    }
+    .shared-banner {
+        background-color: #ffffcc;
+        border: 1px solid #cccc00;
+        padding: 10px;
+        margin-bottom: 1rem;
+        font-weight: bold;
+        display: none;
+    }
+
     /* Credits Styles */
     .credits {
         text-align: center;
@@ -157,8 +181,6 @@
     }
 </style>
 <script>
-    // 26 Books covering diverse subfields and pedagogical styles
-    // Revamped Coordinates for Even Distribution:
     // Q1 (Rigour): 0=Intuitive, 1=Standard, 2=Precise, 3=Axiomatic
     // Q2 (Scale): 0=Micro/Intimate, 1=Structure/Boundaries, 2=Fluid/Continuous, 3=Vast/Cosmo
     // Q3 (Methodology): 0=Empirical/Hack, 1=Standard Tools, 2=Analytical/Systematic, 3=First Principles
@@ -193,7 +215,19 @@
         binney: { coord: [2, 3, 2, 3], isbn: "9780691130279", author: "J. Binney, S. Tremaine", title: "Galactic Dynamics", desc: "You think on a cosmic scale, tracking collisionless evolution because dealing with interacting systems is too messy." }
     };
 
-    function process() {
+    // Check for shared URL on load
+    document.addEventListener("DOMContentLoaded", () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('v')) {
+            const vStr = urlParams.get('v');
+            if (/^[0-3]{4}$/.test(vStr)) {
+                const vec = vStr.split('').map(Number);
+                evaluateVector(vec, true);
+            }
+        }
+    });
+
+    function processForm() {
         const f = document.forms['quiz'];
         const questions = ["q1", "q2", "q3", "q4"];
         const errorBox = document.getElementById("error-message");
@@ -218,7 +252,10 @@
             }
         }
         errorBox.style.display = "none";
+        evaluateVector(userVector, false);
+    }
 
+    function evaluateVector(userVector, isShared) {
         let minDistance = Infinity;
         let tiedBooks = [];
 
@@ -238,13 +275,30 @@
             }
         }
 
-        renderResult(tiedBooks, userVector, minDistance);
+        renderResult(tiedBooks, userVector, minDistance, isShared);
     }
 
-    function renderResult(tiedBooks, userVector, minDistance) {
+    function renderResult(tiedBooks, userVector, minDistance, isShared) {
         document.getElementById("quiz-screen").style.display = "none";
         const resultScreen = document.getElementById("result-screen");
         resultScreen.style.display = "block";
+
+        // Handle URL and UI for shared states
+        const vectorStr = userVector.join('');
+        // Fallback for local files to avoid null origin
+        const shareUrl = window.location.href.split('?')[0] + '?v=' + vectorStr;
+        document.getElementById("share-link-input").value = shareUrl;
+
+        if (isShared) {
+            document.getElementById("shared-banner").style.display = "block";
+            document.getElementById("share-container").style.display = "none";
+            document.getElementById("retake-btn").innerText = "Take the Test";
+        } else {
+            document.getElementById("shared-banner").style.display = "none";
+            document.getElementById("share-container").style.display = "block";
+            document.getElementById("retake-btn").innerText = "Retake the Test";
+            window.history.replaceState(null, null, '?v=' + vectorStr); // Update URL bar cleanly
+        }
 
         // Set Heading Text
         const heading = document.getElementById("result-heading");
@@ -288,7 +342,19 @@
         document.getElementById("debug-vector").innerText = `User Profile Vector: [${userVector.join(', ')}] | Minimum Euclidean d²: ${minDistance}`;
     }
 
+    function copyShareLink() {
+        const input = document.getElementById('share-link-input');
+        input.select();
+        input.setSelectionRange(0, 99999); // Mobile compatibility
+        document.execCommand('copy');
+        
+        const btn = document.getElementById('copy-btn');
+        btn.innerText = 'Copied!';
+        setTimeout(() => btn.innerText = 'Copy Link', 2000);
+    }
+
     function resetQuiz() {
+        window.history.replaceState(null, null, window.location.pathname); // Clear URL parameter
         document.forms['quiz'].reset();
         document.getElementById("result-screen").style.display = "none";
         document.getElementById("quiz-screen").style.display = "block";
@@ -348,7 +414,7 @@
 
         <tr>
             <td colspan="2" class="button-container">
-                <button type="button" onClick="process();">Which Physics Textbook am I?</button>
+                <button type="button" onClick="processForm();">Which Physics Textbook am I?</button>
             </td>
         </tr>
     </table>
@@ -356,7 +422,11 @@
 </div>
 
 <div id="result-screen">
-    <div style="font-family: monospace; color: #666; margin-bottom: 2rem;" id="debug-vector"></div>
+    <div id="shared-banner" class="shared-banner">
+        You are viewing a shared result. Want to see which textbook you are?
+    </div>
+
+    <div style="font-family: monospace; color: #666; margin-bottom: 1rem;" id="debug-vector"></div>
     
     <div id="result-heading"></div>
     
@@ -364,10 +434,18 @@
         <!-- Cards injected here via JS -->
     </div>
     
-    <button type="button" onClick="resetQuiz();">Retake the Test</button>
+    <div id="share-container" class="share-container">
+        <strong style="display:block; margin-bottom: 5px;">Share your result:</strong>
+        <input type="text" id="share-link-input" class="share-input" readonly>
+        <button id="copy-btn" onClick="copyShareLink();">Copy Link</button>
+    </div>
+
+    <div style="margin-top: 1rem;">
+        <button id="retake-btn" type="button" onClick="resetQuiz();">Retake the Test</button>
+    </div>
 </div>
 
-<hr style="margin-top: 2rem; border: 0; border-top: 1px solid var(--border-color);">
+<hr style="margin-top: 1rem; border: 0; border-top: 1px solid var(--border-color);">
 <div class="credits">
     Inspired by <a href="https://math.jhu.edu/~savitt/GTM.html" target="_blank">David Savitt's "The Springer GTM Test"</a> <br>
     and <a href="https://github.com/TheArjunAgarwal/classic-cs-textbook" target="_blank">Arjun Maneesh Agarwal's "Classic CS Textbook Test"</a>.
